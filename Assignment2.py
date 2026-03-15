@@ -35,7 +35,7 @@ traildata['event'] = (traildata['event'] != 'normal').astype(int)
 # print(f'After, sum of anomalies: {(traildata['event'] != 0).sum()}')
 # print(traildata.info())
 trailtarget = traildata['event']
-print("Classes in training set:", np.unique(trailtarget))
+# print("Classes in training set:", np.unique(trailtarget))
 trail = traildata.drop(columns='event')
 
 # %%
@@ -81,7 +81,6 @@ print(f'Accuracy score: {accuracy_score(target_test, predictions):.5f}')
 #Using KFold cross validation on the test set only.
 #kf = KFold(n_splits=5)
 scores = cross_val_score(model, trail_train_scaled, target_train, cv=5)
-#print(f'Scores from KFold:  {scores}')
 print(f'Mean of scores: {scores.mean():.5f}')
 print(f'Standard deviation of scores: {scores.std():.5f}')
 
