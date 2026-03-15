@@ -11,34 +11,42 @@ from sklearn.metrics import classification_report, accuracy_score
 trail1 = pd.read_csv('Trail1_extracted_features_acceleration_m1ai1-1-1.csv')
 trail2 = pd.read_csv('Trail2_extracted_features_acceleration_m1ai1-2.csv')
 trail3 = pd.read_csv('Trail3_extracted_features_acceleration_m2ai0-2.csv')
-#print(trail1.info())
-#print(trail2.info())
-#print(trail3.info())
+# print(trail1.info())
+# print(trail2.info())
+# print(trail3.info())
+# print(f'Trail1 shape: {trail1.shape}')
+# print(f'Trail2 shape: {trail2.shape}')
+# print(f'Trail3 shape: {trail3.shape}')
 
 #%%
 # Combine the three files and remove columns
 trails = [trail1,trail2,trail3]
 traildata = pd.concat(trails, ignore_index=True).drop(columns=['start_time','axle','cluster','tsne_1','tsne_2'])
-#print(traildata.info())
+print(f'Traildata shape: {traildata.shape}')
 
 # %%
-#Replacing a 'normal' events with 0, all others with 1
-#print(traildata['event'].unique())
-#print(f'Before: {(traildata['event'] == 'normal').sum()}')
-#print(f'Before: {(traildata['event'] != 'normal').sum()}')
+#Replacing all 'normal' events with 0, all others with 1
+#Separating target and features
+# print(traildata['event'].unique())
+# print(f'Before, sum of normal events: {(traildata['event'] == 'normal').sum()}')
+# print(f'Before, sum of anomalies: {(traildata['event'] != 'normal').sum()}')
 traildata['event'] = (traildata['event'] != 'normal').astype(int)
-#print(f'After: {(traildata['event'] == 0).sum()}')
-#print(f'After: {(traildata['event'] != 0).sum()}')
-#print(traildata.info())
+# print(f'After, sum of normal events: {(traildata['event'] == 0).sum()}')
+# print(f'After, sum of anomalies: {(traildata['event'] != 0).sum()}')
+# print(traildata.info())
 trailtarget = traildata['event']
+print("Classes in training set:", np.unique(trailtarget))
 trail = traildata.drop(columns='event')
 
 # %%
-#Splitting into training and testing data sets
+#Splitting into training and testing data sets: 80/20
+print("Class distribution in full data:")
+print(trailtarget.value_counts())
 trail_train, trail_test, target_train, target_test = (
     train_test_split(trail, trailtarget, test_size=0.2, random_state=42, stratify=trailtarget)
 )
-
+print(f'Trail train shape: {trail_train.shape}, Trail test shape: {trail_test.shape}')
+print(f'Target train shape: {target_train.shape}, Target test shape: {target_test.shape}')
 # %%
 #Normalize features
 #traildata.isnull().sum() #No null data in columns!
@@ -47,13 +55,13 @@ trail_train_scaled = pd.DataFrame(
     scaler.fit_transform(trail_train),
     columns=trail_train.columns
 )
-#Scale the test set based on the scaling from the learning.
+#Scale the test set based on the scaling from the training set.
 trail_test_scaled = pd.DataFrame(
     scaler.transform(trail_test),
     columns=trail_test.columns
 )
-#print(f'Before scaling - Mean: {trail.mean().mean():.4f}, Std: {trail.std().mean():.4f}')
-#print(f'After scaling - Mean: {trail_scaled.mean().mean():.4f}, Std: {trail_scaled.std().mean():.4f}')
+print(f'Before scaling - Mean: {trail.mean().mean():.4f}, Std: {trail.std().mean():.4f}')
+print(f'After scaling (Training set) - Mean: {trail_train_scaled.mean().mean():.4f}, Std: {trail_train_scaled.std().mean():.4f}')
 
 #%%
 #Train SVM-model
@@ -61,12 +69,12 @@ model = SVC(gamma='auto', random_state=42)
 model.fit(trail_train_scaled,target_train)
 
 # %%
-#Use model
+#Use model to predict on the test set
 predictions = model.predict(trail_test_scaled)
 
 #%%
-#Evaluate
-print(f'Classification report: \n {classification_report(target_test, predictions, target_names=['Normal', 'Anomaly'])}')
+#Evaluate results
+print(f'Classification report: \n {classification_report(target_test, predictions, target_names=["Normal", "Anomaly"])}')
 print(f'Accuracy score: {accuracy_score(target_test, predictions):.5f}')
 
 # %%
